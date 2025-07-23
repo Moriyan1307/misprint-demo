@@ -1,0 +1,59 @@
+# /docker-compose.yml
+# This file should now be in the root of your project folder.
+# It defines the full stack: frontend, backend, and database.
+#
+# To run from the project root: docker-compose up --build
+
+version: "3.8"
+
+services:
+  # The PostgreSQL database service
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=misprint_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d misprint_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # The FastAPI application service
+  api:
+    build:
+      context: ./backend # UPDATED: Path is now relative to the root
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=misprint_db
+    command:
+      ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      - ./backend:/app # UPDATED: Path is now relative to the root
+
+  # The Next.js frontend service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
