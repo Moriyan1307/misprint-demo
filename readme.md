@@ -1,10 +1,10 @@
 # Marketplace Concurrency PoC
 
-This project is a full-stack proof-of-concept (PoC) demonstrating a robust solution to the "last item" race condition problem common in e-commerce and marketplace applications. It simulates a high-concurrency scenario where multiple users attempt to buy a single available item simultaneously, ensuring only one purchase succeeds while providing a real-time, responsive user experience.
+This project is a full-stack proof-of-concept (PoC) demonstrating a robust solution to the "last item" race condition problem common trading and marketplace applications. It simulates a high-concurrency scenario where multiple users attempt to buy a single available item simultaneously, ensuring only one purchase succeeds while providing a real-time, responsive user experience.
 
 ---
 
-## 🚩 The Problem: Race Conditions
+## The Problem: Race Conditions
 
 In a typical marketplace, if two users try to buy the last available item at the same time, a naive implementation might lead to critical errors:
 
@@ -16,7 +16,7 @@ This project solves this by ensuring that the process of checking availability a
 
 ---
 
-## 🛠️ The Solution: Pessimistic Locking & Live Updates
+## The Solution: Pessimistic Locking & Live Updates
 
 This PoC implements a modern, scalable solution using two key principles:
 
@@ -29,7 +29,7 @@ This PoC implements a modern, scalable solution using two key principles:
 
 ---
 
-## 🧰 Tech Stack
+## Tech Stack
 
 - **Backend:** Python, FastAPI, `asyncpg`
 - **Frontend:** Next.js, React, Tailwind CSS
@@ -39,7 +39,7 @@ This PoC implements a modern, scalable solution using two key principles:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -81,20 +81,21 @@ To simulate the high-concurrency "stampede," run the test script from the projec
 First, ensure you have the required Python library:
 
 ```bash
+cd tests
 pip install httpx
 ```
 
 Then, run the test:
 
 ```bash
-python tests/concurrency_test.py
+python concurrency_test.py
 ```
 
 Watch the terminal output and the frontend at [http://localhost:3000](http://localhost:3000) to see the results in real-time. The test will show that exactly 1 request succeeds and 99 fail, and the frontend will instantly update to show "Quantity: 0".
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 misprint-demo/
