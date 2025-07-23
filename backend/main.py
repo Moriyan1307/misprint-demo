@@ -8,8 +8,8 @@ from pydantic import BaseModel
 import logging
 import asyncio
 
-# Configuration
-# if not set, use default values, for the sake of the demo, i am exposing the credentials in the docker-compose.yml file
+
+#  for the sake of the demo, i am exposing the credentials in the docker-compose.yml file
 DB_USER = os.getenv("DB_USER", "user")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
 DB_HOST = os.getenv("DB_HOST", "db")
@@ -21,10 +21,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Real-time Update Mechanism (SSE)
+# real-time Update Mechanism (SSE)
+# this is the point where in future we can use redis pub/sub to broadcast the updates to the frontend
 sse_connections = []
 
-# Database Connection Pool
+# database connection pool
 db_pool = None
 
 async def get_db_pool():
@@ -81,6 +82,7 @@ class Item(BaseModel):
 class OrderResponse(BaseModel):
     message: str; item_id: str
 
+# this function is used to broadcast the update to the frontend
 async def broadcast_update(item_id: str):
     if not sse_connections: return
     logger.info(f"Broadcasting update for item '{item_id}' to {len(sse_connections)} clients.")
@@ -94,6 +96,7 @@ async def broadcast_update(item_id: str):
 
 @app.get("/events")
 async def sse_endpoint(request: Request):
+    # this is the endpoint that the frontend will connect to for live updates
     from starlette.responses import StreamingResponse
     queue = asyncio.Queue()
     sse_connections.append(queue)
@@ -117,11 +120,12 @@ async def get_item_status(item_id: str, pool: asyncpg.Pool = Depends(get_db_pool
         if not row: raise HTTPException(status_code=404, detail="Item not found")
         return Item(**dict(row))
 
+
 @app.post("/buy/{item_id}", response_model=OrderResponse)
 async def buy_item(item_id: str, pool: asyncpg.Pool = Depends(get_db_pool)):
     purchase_succeeded = False
     async with pool.acquire() as connection:
-        # The transaction ensures atomicity. It either all succeeds or all fails.
+        # the transaction ensures atomicity. It either all succeeds or all fails.
         async with connection.transaction():
             try:
                 item = await connection.fetchrow("SELECT quantity FROM items WHERE id = $1 FOR UPDATE", item_id)
@@ -139,13 +143,13 @@ async def buy_item(item_id: str, pool: asyncpg.Pool = Depends(get_db_pool)):
             except asyncpg.exceptions.LockNotAvailableError:
                 raise HTTPException(status_code=503, detail="Server is busy, please try again.")
     
-    # *** THE FIX IS HERE ***
-    # We only broadcast the update AFTER the transaction is successfully committed and the lock is released.
+    
+    # THE FIX IS HERE
+    # we only broadcast the update AFTER the transaction is successfully committed and the lock is released.
     if purchase_succeeded:
         await broadcast_update(item_id)
         return OrderResponse(message="Purchase successful!", item_id=item_id)
     
-    # This part should not be reached if logic is correct, but as a fallback.
     raise HTTPException(status_code=500, detail="An unexpected error occurred during purchase.")
 
 

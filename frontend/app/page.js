@@ -1,12 +1,8 @@
-/*
- * =================================================================
- * File: /frontend/app/page.js (Updated with SSE for live updates)
- * =================================================================
- */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 
+// for the sake of the demo, i am exposing the credentials here
 const API_URL = "http://localhost:8000";
 const ITEM_ID = "charizard-1st-ed";
 
@@ -36,32 +32,28 @@ export default function HomePage() {
     fetchItemStatus();
   }, [fetchItemStatus]);
 
-  // *** NEW: useEffect for Server-Sent Events ***
+  // useEffect for Server-Sent Events
   useEffect(() => {
-    // The EventSource API is built into modern browsers.
-    // It keeps a persistent connection to the server.
+    // the EventSource API is built to keep a persistent connection to the server.
     const eventSource = new EventSource(`${API_URL}/events`);
 
-    // This function is called whenever the server sends a message
+    // this function is called whenever the server sends a message
     eventSource.onmessage = (event) => {
       console.log("Received SSE update:", event.data);
       const updatedItem = JSON.parse(event.data);
-      // Update the component's state with the new data from the server
+      // update the component's state with the new data from the server
       setItem(updatedItem);
     };
 
-    // Handle any errors with the connection
     eventSource.onerror = (err) => {
       console.error("EventSource failed:", err);
-      // You might want to add logic here to try and reconnect
     };
 
-    // This cleanup function is crucial. It runs when the component
-    // unmounts, closing the connection to prevent memory leaks.
+    // cleanup function, unmounts, closing the connection to prevent memory leaks.
     return () => {
       eventSource.close();
     };
-  }, []); // The empty dependency array means this runs once on mount.
+  }, []);
 
   const handleBuy = async () => {
     setIsLoading(true);
@@ -79,8 +71,6 @@ export default function HomePage() {
     } catch (error) {
       setMessage({ text: "An unexpected error occurred.", type: "error" });
     } finally {
-      // We no longer need to manually fetch status here,
-      // as the SSE will push the update automatically.
       setIsLoading(false);
     }
   };
@@ -98,7 +88,6 @@ export default function HomePage() {
     }
   };
 
-  // ... The rest of the JSX rendering code is identical ...
   if (error) {
     return (
       <main className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -123,7 +112,7 @@ export default function HomePage() {
       <div className="w-full max-w-sm bg-gray-800 border border-gray-700 rounded-2xl shadow-lg overflow-hidden">
         <div className="p-6">
           <h1 className="text-2xl font-bold text-center text-cyan-400">
-            Misprint PoC Demo
+            Misprint Demo
           </h1>
           <p className="text-sm text-center text-gray-400 mb-6">
             Concurrency Test (Live)

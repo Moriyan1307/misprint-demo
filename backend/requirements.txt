@@ -2,4 +2,4 @@
 fastapi
 uvicorn[standard]
 asyncpg
-psycopg2-binary # Often useful as a fallback or for certain tools
+psycopg2-binary 
